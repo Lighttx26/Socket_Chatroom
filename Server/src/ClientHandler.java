@@ -14,6 +14,14 @@ public class ClientHandler extends Thread {
         this.server = server;
     }
 
+    private static String getMessageCode(String message) {
+        return message.substring(0, 2);
+    }
+
+    private static String getMessagePayload(String message) {
+        return message.substring(3);
+    }
+
     @Override
     public void run() {
         while (true) {
@@ -32,18 +40,28 @@ public class ClientHandler extends Thread {
                 }
             }
 
-            if (s.substring(0, 4).equals("exit")) {
+            String code = getMessageCode(s);
+
+            if (code.equals("00")) {
                 try {
-                    server.deliverChat(s.substring(5) + " leave the conversation.");
-                    server.log(s.substring(5) + " leave the conversation.");
+                    server.deliverChat("11 " + getMessagePayload(s) + " leave the conversation.");
+                    server.log(getMessagePayload(s) + " leave the conversation.");
                 } catch (IOException e) {
                     System.out.println("Cannot send confirmation.");
                 }
 
+            } else if (code.equals("01")) {
+                try {
+                    server.deliverChat("11 " + getMessagePayload(s) + " enter the conversation.");
+                    server.log(getMessagePayload(s) + " enter the conversation.");
+                } catch (IOException e) {
+                    System.out.println("Cannot send confirmation.");
+                }
             } else {
                 try {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                    server.deliverChat("[" + LocalDateTime.now().format(formatter) + "] " + s);
+                    server.deliverChat(
+                            "11 " + "[" + LocalDateTime.now().format(formatter) + "] " + getMessagePayload(s));
                 } catch (IOException e) {
                     System.out.println("Cannot send data.");
                     break;

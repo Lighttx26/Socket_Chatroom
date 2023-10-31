@@ -17,6 +17,12 @@ import javax.swing.JTextField;
 import App.Client;
 
 public class ClientGUI extends JFrame {
+
+    // 00 : exit
+    // 01 : enter
+    // 10 : server stop
+    // 11 : send
+
     private Client client;
 
     // Components
@@ -110,7 +116,7 @@ public class ClientGUI extends JFrame {
                 if (client.getUsername() != null) {
                     String text = textField.getText();
                     try {
-                        client.send(client.getUsername() + ": " + text);
+                        client.send("11 " + client.getUsername() + ": " + text);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -140,7 +146,7 @@ public class ClientGUI extends JFrame {
                     usernameField.setEditable(false);
                     if (client.connect()) {
                         resultArea.append("Connect to server successfully. Start chat now.\n");
-                        // client.send("enter " + client.getUsername());
+                        client.send("01 " + client.getUsername());
 
                         connectButton.setEnabled(false);
                         leaveButton.setEnabled(true);
@@ -155,7 +161,7 @@ public class ClientGUI extends JFrame {
         leaveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                client.send("exit " + client.getUsername());
+                client.send("00 " + client.getUsername());
                 // try {
                 // client.socket.shutdownOutput();
                 // } catch (IOException e1) {
@@ -170,11 +176,21 @@ public class ClientGUI extends JFrame {
         while (true) {
             if (client.isConnected()) {
                 String res = client.receive();
-                if (res.equals(client.getUsername() + " leave the conversation.")) {
-                    client.stop();
+                String code = res.substring(0, 2);
+                String payload = res.substring(3);
+                if (code.equals("11")) {
+                    if (payload.equals(client.getUsername() + " leave the conversation.")) {
+                        client.stop();
+                        dispose();
+                    } else if (payload.equals(client.getUsername() + " enter the conversation.")) {
+
+                    } else
+                        resultArea.append(payload + "\n");
+                } else if (code.equals("10")) {
+                    resultArea.append(payload + "\n");
                     dispose();
-                } else
-                    resultArea.append(res + "\n");
+                }
+
             } else {
                 try {
                     Thread.sleep(100);
