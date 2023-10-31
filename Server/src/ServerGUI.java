@@ -74,12 +74,20 @@ public class ServerGUI extends JFrame {
                 startButton.setEnabled(false);
                 stopButton.setEnabled(true);
                 try {
-                    server.start();
+                    if (server.getState() == Thread.State.NEW) {
+                        server.start();
+                    } else if (server.getState() == Thread.State.TERMINATED) {
+                        server = new Server(ServerGUI.this);
+                        server.start();
+                    } else if (server.getState() == Thread.State.RUNNABLE) {
+                        server.run();
+                    }
                 } catch (Exception e1) {
-                    logArea.append("Cannot start server: " + e1.getMessage() + "\n");
+                    // e1.printStackTrace();
+                    server.log("Cannot start server: " + e1.getMessage());
                 }
 
-                logArea.append("Server is running at port " + server.getPortNumber() + "\n");
+                server.log("Server is running at port " + server.getPortNumber());
             }
         });
 
@@ -89,10 +97,10 @@ public class ServerGUI extends JFrame {
                 try {
                     server.stopServer();
                 } catch (Exception e1) {
-                    logArea.append("Cannot stop server: " + e1.getMessage() + "\n");
+                    server.log("Cannot stop server: " + e1.getMessage() + "\n");
                 }
 
-                logArea.append("Server is stopped\n");
+                server.log("Server is stopped");
                 startButton.setEnabled(true);
                 stopButton.setEnabled(false);
             }

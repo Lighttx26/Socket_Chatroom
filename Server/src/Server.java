@@ -13,11 +13,23 @@ public class Server extends Thread {
     ServerSocket serverSocket;
     ServerGUI serverGUI;
 
+    public Server() {
+        super();
+    }
+
+    public Server(ServerGUI serverGUI) {
+        this.serverGUI = serverGUI;
+    }
+
     public int getPortNumber() {
         return this.port;
     }
 
-    void openGUI() throws Exception {
+    public int getPortNumber2() {
+        return this.serverSocket.getLocalPort();
+    }
+
+    void openGUI() {
         serverGUI = new ServerGUI(this);
     }
 
@@ -25,7 +37,6 @@ public class Server extends Thread {
     public void run() {
         try {
             serverSocket = new ServerSocket(port);
-
             while (!serverSocket.isClosed()) {
                 Socket clientSocket = serverSocket.accept();
                 ClientHandler clientThread = new ClientHandler(clientSocket, this);
@@ -33,10 +44,10 @@ public class Server extends Thread {
                 clientThread.start();
                 Thread.sleep(500);
             }
-
-            serverSocket.close();
-        } catch (Exception e) {
-            // TODO: handle exception
+        } catch (IOException e1) {
+            System.out.println("Server socket is closed.\n");
+        } catch (InterruptedException e2) {
+            System.out.println("Thread cannot sleep: " + e2.getMessage() + "\n");
         }
 
     }
@@ -50,8 +61,6 @@ public class Server extends Thread {
 
         if (!serverSocket.isClosed())
             serverSocket.close();
-
-        this.interrupt();
     }
 
     public void deliverChat(String s) throws IOException {
