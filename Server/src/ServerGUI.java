@@ -128,7 +128,7 @@ public class ServerGUI extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    server.stop();
+                    server.stopServer();
                 } catch (Exception e1) {
                     logArea.append("Cannot stop server: " + e1.getMessage());
                 }

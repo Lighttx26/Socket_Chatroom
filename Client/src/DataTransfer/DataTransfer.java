@@ -7,7 +7,7 @@ import java.net.Socket;
 
 public class DataTransfer {
 
-    public final Socket socket;
+    private final Socket socket;
     private boolean isclose;
 
     public DataTransfer(Socket socket) {

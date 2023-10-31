@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -16,15 +15,14 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import App.Client;
-import DataTransfer.DataTransfer;
 
 public class ClientGUI extends JFrame {
-    private DataTransfer dataTransfer;
     private Client client;
 
+    // Components
     private JPanel usernamePanel;
     private JTextField usernameField;
-    private JButton usernameButton;
+    private JButton connectButton;
     private JButton leaveButton;
     private JTextField textField;
     private JButton sendButton;
@@ -34,8 +32,7 @@ public class ClientGUI extends JFrame {
     private JPanel buttonsPanel;
     private JPanel resultPanel;
 
-    public ClientGUI(DataTransfer dataTransfer, Client client) {
-        this.dataTransfer = dataTransfer;
+    public ClientGUI(Client client) {
         this.client = client;
         CreateView();
         Show();
@@ -56,13 +53,14 @@ public class ClientGUI extends JFrame {
         usernamePanel = new JPanel();
         usernameField = new JTextField();
         usernameField.setPreferredSize(new Dimension(120, 30));
-        usernameButton = new JButton();
-        usernameButton.setText("Enter username");
+        connectButton = new JButton();
+        connectButton.setText("Connect");
         leaveButton = new JButton();
         leaveButton.setText("Leave");
+        leaveButton.setEnabled(false);
 
         usernamePanel.add(usernameField);
-        usernamePanel.add(usernameButton);
+        usernamePanel.add(connectButton);
         usernamePanel.add(leaveButton);
 
         resultPanel = new JPanel();
@@ -83,6 +81,7 @@ public class ClientGUI extends JFrame {
 
         textField = new JTextField();
         textField.setPreferredSize(new Dimension(320, 30));
+        textField.setEditable(false);
         textPanel.add(textField);
 
         buttonsPanel = new JPanel();
@@ -111,7 +110,7 @@ public class ClientGUI extends JFrame {
                 if (client.getUsername() != null) {
                     String text = textField.getText();
                     try {
-                        dataTransfer.send(client.getUsername() + ": " + text);
+                        client.send(client.getUsername() + ": " + text);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -131,37 +130,58 @@ public class ClientGUI extends JFrame {
             }
         });
 
-        usernameButton.addActionListener(new ActionListener() {
+        connectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                client.setUsername(usernameField.getText());
-                usernameField.setEditable(false);
+                if (usernameField.getText().equals("")) {
+                    resultArea.append("Please enter your username.\n");
+                } else {
+                    client.setUsername(usernameField.getText());
+                    usernameField.setEditable(false);
+                    if (client.connect()) {
+                        resultArea.append("Connect to server successfully. Start chat now.\n");
+                        // client.send("enter " + client.getUsername());
+
+                        connectButton.setEnabled(false);
+                        leaveButton.setEnabled(true);
+                        textField.setEditable(true);
+                    } else {
+                        resultArea.append("Cannot connect to server. Try again.\n");
+                    }
+                }
             }
         });
 
         leaveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dataTransfer.send("exit " + client.getUsername());
-                try {
-                    dataTransfer.socket.shutdownOutput();
-                } catch (IOException e1) {
-                    System.err.println("Cannot shutdown output.");
-                    e1.printStackTrace();
-                }
+                client.send("exit " + client.getUsername());
+                // try {
+                // client.socket.shutdownOutput();
+                // } catch (IOException e1) {
+                // System.err.println("Cannot shutdown output.");
+                // e1.printStackTrace();
+                // }
             }
         });
     }
 
     public void ReceiveChat() {
         while (true) {
-            String res = dataTransfer.receive();
-            if (res.equals(client.getUsername() + " leave the conversation.")
-                    && dataTransfer.socket.isOutputShutdown()) {
-                dataTransfer.close();
-                dispose();
-            } else
-                resultArea.append(res + "\n");
+            if (client.isConnected()) {
+                String res = client.receive();
+                if (res.equals(client.getUsername() + " leave the conversation.")) {
+                    client.stop();
+                    dispose();
+                } else
+                    resultArea.append(res + "\n");
+            } else {
+                try {
+                    Thread.sleep(100);
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
+            }
         }
     }
 }

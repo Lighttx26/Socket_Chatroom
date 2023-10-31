@@ -4,7 +4,7 @@ import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Server {
+public class Server extends Thread {
 
     public Set<ClientHandler> clientHandlers = new HashSet<ClientHandler>();
     private int port = 2626;
@@ -19,21 +19,27 @@ public class Server {
         serverGUI = new ServerGUI(this);
     }
 
-    public void start() throws Exception {
-        serverSocket = new ServerSocket(port);
+    @Override
+    public void run() {
+        try {
+            serverSocket = new ServerSocket(port);
 
-        while (!serverSocket.isClosed()) {
-            Socket clientSocket = serverSocket.accept();
-            ClientHandler clientThread = new ClientHandler(clientSocket, this);
-            clientHandlers.add(clientThread);
-            clientThread.start();
-            Thread.sleep(500);
+            while (!serverSocket.isClosed()) {
+                Socket clientSocket = serverSocket.accept();
+                ClientHandler clientThread = new ClientHandler(clientSocket, this);
+                clientHandlers.add(clientThread);
+                clientThread.start();
+                Thread.sleep(500);
+            }
+
+            serverSocket.close();
+        } catch (Exception e) {
+            // TODO: handle exception
         }
 
-        serverSocket.close();
     }
 
-    public void stop() throws Exception {
+    public void stopServer() throws Exception {
         for (ClientHandler clientHandler : clientHandlers) {
             clientHandler.interrupt();
         }
@@ -42,6 +48,8 @@ public class Server {
 
         if (!serverSocket.isClosed())
             serverSocket.close();
+
+        this.interrupt();
     }
 
     public void deliverChat(String s) throws IOException {
@@ -60,6 +68,6 @@ public class Server {
 
     public static void main(String[] args) throws Exception {
         Server server = new Server();
-        server.start();
+        server.openGUI();
     }
 }
