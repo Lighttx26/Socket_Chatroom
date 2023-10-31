@@ -1,6 +1,8 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -63,7 +65,8 @@ public class Server extends Thread {
     }
 
     public void log(String s) {
-        serverGUI.log(s);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        serverGUI.log("[" + LocalDateTime.now().format(formatter) + "] " + s);
     }
 
     public static void main(String[] args) throws Exception {

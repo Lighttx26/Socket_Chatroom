@@ -8,7 +8,7 @@ import View.ClientGUI;
 
 public class Client {
     private String username;
-    private ClientGUI clientGUI;
+    // private ClientGUI clientGUI;
     private DataTransfer dataTransfer;
     private boolean _isConnected;
 
@@ -29,7 +29,8 @@ public class Client {
     }
 
     public void start() {
-        clientGUI = new ClientGUI(this);
+        new ClientGUI(this);
+        // clientGUI = new ClientGUI(this);
     }
 
     public boolean connect() {
