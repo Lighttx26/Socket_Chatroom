@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -41,16 +43,18 @@ public class ClientGUI extends JFrame {
     public ClientGUI(Client client) {
         this.client = client;
         CreateView();
-        Show();
+        // Show();
         AttachEventHandler();
         ReceiveChat();
     }
 
-    public void Show() {
-        this.setVisible(true);
-    }
+    // public void Show() {
+    // this.setVisible(true);
+    // }
 
     private void CreateView() {
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this.setTitle("Client GUI");
 
         this.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
         this.setMinimumSize(new Dimension(400, 500));
@@ -63,7 +67,6 @@ public class ClientGUI extends JFrame {
         connectButton.setText("Connect");
         leaveButton = new JButton();
         leaveButton.setText("Leave");
-        leaveButton.setEnabled(false);
 
         usernamePanel.add(usernameField);
         usernamePanel.add(connectButton);
@@ -76,7 +79,6 @@ public class ClientGUI extends JFrame {
 
         resultArea = new JTextArea(16, 32);
         resultArea.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-        resultArea.setEditable(false);
         resultArea.setWrapStyleWord(true);
         JScrollPane sp = new JScrollPane(resultArea);
         resultPanel.add(sp);
@@ -87,7 +89,6 @@ public class ClientGUI extends JFrame {
 
         textField = new JTextField();
         textField.setPreferredSize(new Dimension(320, 30));
-        textField.setEditable(false);
         textPanel.add(textField);
 
         buttonsPanel = new JPanel();
@@ -106,10 +107,79 @@ public class ClientGUI extends JFrame {
         this.add(textPanel);
         this.add(buttonsPanel);
 
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        settingNotConnected();
+
+        this.setVisible(true);
+    }
+
+    void settingNotConnected() {
+        // usernameField.setEditable(true);
+        connectButton.setEnabled(true);
+        leaveButton.setEnabled(false);
+        textField.setEditable(false);
+        sendButton.setEnabled(false);
+    }
+
+    void settingConnected() {
+        usernameField.setEditable(false);
+        connectButton.setEnabled(false);
+        leaveButton.setEnabled(true);
+        textField.setEditable(true);
+        sendButton.setEnabled(true);
     }
 
     private void AttachEventHandler() {
+        connectButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (usernameField.getText().equals("")) {
+                    resultArea.append("Please enter your username.\n");
+                } else {
+                    client.setUsername(usernameField.getText());
+                    if (client.connect()) {
+                        resultArea.append("Connect to server successfully. Start chat now.\n");
+                        client.send("01 " + client.getUsername());
+
+                        settingConnected();
+                    } else {
+                        resultArea.append("Cannot connect to server. Try again.\n");
+                    }
+                }
+            }
+        });
+
+        usernameField.addKeyListener(new KeyListener() {
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    connectButton.doClick();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+
+        });
+
+        leaveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                client.send("00 " + client.getUsername());
+                // try {
+                // client.socket.shutdownOutput();
+                // } catch (IOException e1) {
+                // System.err.println("Cannot shutdown output.");
+                // e1.printStackTrace();
+                // }
+            }
+        });
+
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -129,50 +199,33 @@ public class ClientGUI extends JFrame {
             }
         });
 
+        textField.addKeyListener(new KeyListener() {
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    sendButton.doClick();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        });
+
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 resultArea.setText("");
             }
         });
-
-        connectButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (usernameField.getText().equals("")) {
-                    resultArea.append("Please enter your username.\n");
-                } else {
-                    client.setUsername(usernameField.getText());
-                    usernameField.setEditable(false);
-                    if (client.connect()) {
-                        resultArea.append("Connect to server successfully. Start chat now.\n");
-                        client.send("01 " + client.getUsername());
-
-                        connectButton.setEnabled(false);
-                        leaveButton.setEnabled(true);
-                        textField.setEditable(true);
-                    } else {
-                        resultArea.append("Cannot connect to server. Try again.\n");
-                    }
-                }
-            }
-        });
-
-        leaveButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                client.send("00 " + client.getUsername());
-                // try {
-                // client.socket.shutdownOutput();
-                // } catch (IOException e1) {
-                // System.err.println("Cannot shutdown output.");
-                // e1.printStackTrace();
-                // }
-            }
-        });
     }
 
-    public void ReceiveChat() {
+    void ReceiveChat() {
         while (true) {
             if (client.isConnected()) {
                 String res = client.receive();
@@ -187,8 +240,14 @@ public class ClientGUI extends JFrame {
                     } else
                         resultArea.append(payload + "\n");
                 } else if (code.equals("10")) {
-                    resultArea.append(payload + "\n");
-                    dispose();
+                    resultArea.append(payload);
+                    resultArea.append("Try reconnect to server again.\n");
+
+                    client.stop();
+
+                    settingNotConnected();
+
+                    // dispose();
                 }
 
             } else {

@@ -25,20 +25,22 @@ public class ServerGUI extends JFrame {
         this.server = server;
         CreateView();
         stopButton.setEnabled(false);
-        Show();
+        // Show();
         AttachEventHandler();
         // ReceiveChat();
     }
 
-    public void Show() {
-        this.setVisible(true);
-    }
+    // public void Show() {
+    // this.setVisible(true);
+    // }
 
     private void CreateView() {
+        this.setTitle("Server GUI");
+        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        this.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-        this.setMinimumSize(new Dimension(400, 500));
-        this.setPreferredSize(new Dimension(400, 500));
+        this.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 10));
+        this.setMinimumSize(new Dimension(400, 400));
+        this.setPreferredSize(new Dimension(400, 400));
 
         operationPanel = new JPanel();
         startButton = new JButton();
@@ -63,7 +65,7 @@ public class ServerGUI extends JFrame {
         this.add(operationPanel);
         this.add(logPanel);
 
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        this.setVisible(true);
     }
 
     private void AttachEventHandler() {

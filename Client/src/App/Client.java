@@ -28,7 +28,7 @@ public class Client {
         return dataTransfer.receive();
     }
 
-    public void start() {
+    void start() {
         new ClientGUI(this);
         // clientGUI = new ClientGUI(this);
     }
@@ -55,7 +55,7 @@ public class Client {
     public void stop() {
         _isConnected = false;
         dataTransfer.close();
-        System.exit(0);
+        // System.exit(0);
     }
 
     public static void main(String[] args) throws Exception {

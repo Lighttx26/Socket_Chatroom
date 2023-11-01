@@ -27,6 +27,7 @@ public class DataTransfer {
 
         try {
             dataOutputStream.writeUTF(str);
+            dataOutputStream.flush();
             // bufferedWriter.flush();
         } catch (IOException e) {
             System.err.println("Cannot send data to server.");

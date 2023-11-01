@@ -25,10 +25,6 @@ public class Server extends Thread {
         return this.port;
     }
 
-    public int getPortNumber2() {
-        return this.serverSocket.getLocalPort();
-    }
-
     void openGUI() {
         serverGUI = new ServerGUI(this);
     }

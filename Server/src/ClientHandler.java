@@ -103,6 +103,7 @@ public class ClientHandler extends Thread {
             // BufferedWriter bufferedWriter = new BufferedWriter(outputStreamWriter);
             // bufferedWriter.write(chat);
             dataOutputStream.writeUTF(chat);
+            dataOutputStream.flush();
         } else {
             System.out.println("Socket is closed.");
         }
