@@ -10,12 +10,14 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 public class ServerGUI extends JFrame {
     // private DataTransfer dataTransfer;
     private Server server;
 
     private JPanel operationPanel;
+    private JTextField portField;
     private JButton startButton;
     private JButton stopButton;
     private JTextArea logArea;
@@ -43,10 +45,14 @@ public class ServerGUI extends JFrame {
         this.setPreferredSize(new Dimension(400, 400));
 
         operationPanel = new JPanel();
+        portField = new JTextField();
+        portField.setPreferredSize(new Dimension(100, 28));
         startButton = new JButton();
         startButton.setText("Start server");
         stopButton = new JButton();
         stopButton.setText("Stop server");
+
+        operationPanel.add(portField);
         operationPanel.add(startButton);
         operationPanel.add(stopButton);
 
@@ -68,28 +74,33 @@ public class ServerGUI extends JFrame {
         this.setVisible(true);
     }
 
+    public void settingServerOn() {
+        portField.setEditable(false);
+        startButton.setEnabled(false);
+        stopButton.setEnabled(true);
+    }
+
+    public void settingServerOff() {
+        portField.setEditable(true);
+        startButton.setEnabled(true);
+        stopButton.setEnabled(false);
+    }
+
     private void AttachEventHandler() {
 
         startButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                startButton.setEnabled(false);
-                stopButton.setEnabled(true);
-                try {
-                    if (server.getState() == Thread.State.NEW) {
-                        server.start();
-                    } else if (server.getState() == Thread.State.TERMINATED) {
-                        server = new Server(ServerGUI.this);
-                        server.start();
-                    } else if (server.getState() == Thread.State.RUNNABLE) {
-                        server.run();
-                    }
-                } catch (Exception e1) {
-                    // e1.printStackTrace();
-                    server.log("Cannot start server: " + e1.getMessage());
+                if (server.getState() == Thread.State.NEW) {
+                    server.setPortNumber(Integer.parseInt(portField.getText()));
+                    server.start();
+                } else if (server.getState() == Thread.State.TERMINATED) {
+                    server = new Server(ServerGUI.this);
+                    server.setPortNumber(Integer.parseInt(portField.getText()));
+                    server.start();
+                } else if (server.getState() == Thread.State.RUNNABLE) {
+                    server.run();
                 }
-
-                server.log("Server is running at port " + server.getPortNumber());
             }
         });
 
@@ -104,6 +115,7 @@ public class ServerGUI extends JFrame {
                 }
 
                 server.log("Server is stopped");
+                portField.setEditable(true);
                 startButton.setEnabled(true);
                 stopButton.setEnabled(false);
             }

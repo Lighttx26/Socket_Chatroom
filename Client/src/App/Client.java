@@ -8,9 +8,19 @@ import View.ClientGUI;
 
 public class Client {
     private String username;
+    private String serverIP = "127.0.0.1";
+    private int serverPort = 2626;
     // private ClientGUI clientGUI;
     private DataTransfer dataTransfer;
     private boolean _isConnected;
+
+    public void setServerPort(int port) {
+        serverPort = port;
+    }
+
+    public int getServerPort() {
+        return serverPort;
+    }
 
     public void setUsername(String username) {
         this.username = username;
@@ -35,9 +45,6 @@ public class Client {
 
     public boolean connect() {
         try {
-            String serverIP = "127.0.0.1";
-            int serverPort = 2626;
-
             Socket socket = new Socket(serverIP, serverPort);
             dataTransfer = new DataTransfer(socket);
             _isConnected = true;

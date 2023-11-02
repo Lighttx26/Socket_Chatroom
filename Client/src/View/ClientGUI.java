@@ -11,6 +11,7 @@ import java.awt.event.KeyListener;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -28,8 +29,10 @@ public class ClientGUI extends JFrame {
     private Client client;
 
     // Components
-    private JPanel usernamePanel;
+    private JPanel setupPanel;
+    private JPanel operationPanel;
     private JTextField usernameField;
+    private JTextField portField;
     private JButton connectButton;
     private JButton leaveButton;
     private JTextField textField;
@@ -57,20 +60,38 @@ public class ClientGUI extends JFrame {
         this.setTitle("Client GUI");
 
         this.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
-        this.setMinimumSize(new Dimension(400, 500));
-        this.setPreferredSize(new Dimension(400, 500));
+        this.setMinimumSize(new Dimension(400, 540));
+        this.setPreferredSize(new Dimension(400, 540));
 
-        usernamePanel = new JPanel();
+        setupPanel = new JPanel();
+        setupPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        setupPanel.setMinimumSize(new Dimension(400, 20));
+        setupPanel.setPreferredSize(new Dimension(400, 40));
+
+        JLabel port = new JLabel("Port: ");
+        portField = new JTextField();
+        portField.setPreferredSize(new Dimension(80, 28));
+        JLabel username = new JLabel("Username: ");
         usernameField = new JTextField();
-        usernameField.setPreferredSize(new Dimension(120, 30));
+        usernameField.setPreferredSize(new Dimension(120, 28));
+
+        setupPanel.add(port);
+        setupPanel.add(portField);
+        setupPanel.add(username);
+        setupPanel.add(usernameField);
+
+        operationPanel = new JPanel();
+        operationPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        operationPanel.setMinimumSize(new Dimension(400, 20));
+        operationPanel.setPreferredSize(new Dimension(400, 40));
+
         connectButton = new JButton();
         connectButton.setText("Connect");
         leaveButton = new JButton();
         leaveButton.setText("Leave");
 
-        usernamePanel.add(usernameField);
-        usernamePanel.add(connectButton);
-        usernamePanel.add(leaveButton);
+        operationPanel.add(connectButton);
+        operationPanel.add(leaveButton);
 
         resultPanel = new JPanel();
         resultPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
@@ -102,7 +123,8 @@ public class ClientGUI extends JFrame {
         cancelButton.setText("Clear chat");
         buttonsPanel.add(cancelButton);
 
-        this.add(usernamePanel);
+        this.add(setupPanel);
+        this.add(operationPanel);
         this.add(resultPanel);
         this.add(textPanel);
         this.add(buttonsPanel);
@@ -114,6 +136,7 @@ public class ClientGUI extends JFrame {
 
     void settingNotConnected() {
         // usernameField.setEditable(true);
+        portField.setEditable(true);
         connectButton.setEnabled(true);
         leaveButton.setEnabled(false);
         textField.setEditable(false);
@@ -121,6 +144,7 @@ public class ClientGUI extends JFrame {
     }
 
     void settingConnected() {
+        portField.setEditable(false);
         usernameField.setEditable(false);
         connectButton.setEnabled(false);
         leaveButton.setEnabled(true);
@@ -132,17 +156,22 @@ public class ClientGUI extends JFrame {
         connectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (usernameField.getText().equals("")) {
-                    resultArea.append("Please enter your username.\n");
+                if (portField.getText().equals("")) {
+                    resultArea.append("Please enter port number of server.\n");
                 } else {
-                    client.setUsername(usernameField.getText());
-                    if (client.connect()) {
-                        resultArea.append("Connect to server successfully. Start chat now.\n");
-                        client.send("01 " + client.getUsername());
-
-                        settingConnected();
+                    if (usernameField.getText().equals("")) {
+                        resultArea.append("Please enter your username.\n");
                     } else {
-                        resultArea.append("Cannot connect to server. Try again.\n");
+                        client.setServerPort(Integer.parseInt(portField.getText()));
+                        client.setUsername(usernameField.getText());
+                        if (client.connect()) {
+                            resultArea.append("Connect to server successfully. Start chat now.\n");
+                            client.send("01 " + client.getUsername());
+
+                            settingConnected();
+                        } else {
+                            resultArea.append("Cannot connect to server. Try again.\n");
+                        }
                     }
                 }
             }
@@ -185,12 +214,13 @@ public class ClientGUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 if (client.getUsername() != null) {
                     String text = textField.getText();
-                    try {
-                        client.send("11 " + client.getUsername() + ": " + text);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
+                    if (text.length() > 0) {
+                        try {
+                            client.send("11 " + client.getUsername() + ": " + text);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
                     }
-
                     textField.setText("");
                 } else {
                     resultArea.append("Please enter your username.\n");
@@ -234,7 +264,11 @@ public class ClientGUI extends JFrame {
                 if (code.equals("11")) {
                     if (payload.equals(client.getUsername() + " leave the conversation.")) {
                         client.stop();
-                        dispose();
+                        settingNotConnected();
+                        resultArea.setText("");
+                        portField.setText("");
+                        usernameField.setEditable(true);
+                        // dispose();
                     } else if (payload.equals(client.getUsername() + " enter the conversation.")) {
 
                     } else
